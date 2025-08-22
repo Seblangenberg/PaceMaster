@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#059669"/>
+  
+  <!-- Stopwatch outline -->
+  <circle cx="256" cy="280" r="140" fill="none" stroke="white" stroke-width="16"/>
+  
+  <!-- Stopwatch crown -->
+  <rect x="236" y="120" width="40" height="20" rx="10" fill="white"/>
+  
+  <!-- Stopwatch button -->
+  <circle cx="256" cy="140" r="8" fill="white"/>
+  
+  <!-- Clock hands -->
+  <line x1="256" y1="280" x2="256" y2="200" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="280" x2="320" y2="280" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="256" cy="280" r="12" fill="white"/>
+  
+  <!-- Hour markers -->
+  <circle cx="256" cy="160" r="6" fill="white"/>
+  <circle cx="336" cy="280" r="6" fill="white"/>
+  <circle cx="256" cy="400" r="6" fill="white"/>
+  <circle cx="176" cy="280" r="6" fill="white"/>
+</svg>

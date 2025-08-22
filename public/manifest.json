@@ -1,0 +1,51 @@
+{
+  "name": "Hunter Pace Timer",
+  "short_name": "Pace Timer",
+  "description": "Professional hunter pace event timer and management system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Timing",
+      "short_name": "Timing",
+      "description": "Go directly to timing tab",
+      "url": "/?tab=timing",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "View Results", 
+      "short_name": "Results",
+      "description": "Go directly to results tab",
+      "url": "/?tab=results",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

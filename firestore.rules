@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Events - public read, authenticated write for organizers
+    match /events/{eventId} {
+      allow read: if true; // Public read access
+      allow write: if request.auth != null && 
+        (resource == null || resource.data.organizerId == request.auth.uid);
+      
+      // Divisions subcollection
+      match /divisions/{divisionId} {
+        allow read: if true;
+        allow write: if request.auth != null && 
+          get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
+      
+      // Teams subcollection
+      match /teams/{teamId} {
+        allow read: if true;
+        allow write: if request.auth != null && 
+          get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
+      
+      // Results subcollection
+      match /results/{resultId} {
+        allow read: if true;
+        allow write: if request.auth != null && 
+          get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
+    }
+    
+    // Public leaderboards
+    match /leaderboards/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // App settings - admin only
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+
