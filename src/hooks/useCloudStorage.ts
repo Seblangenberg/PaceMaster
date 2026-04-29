@@ -54,9 +54,8 @@ export const useCloudStorage = () => {
     const handleOffline = () => {
       setState(prev => ({ ...prev, isOnline: false }));
       toast({
-        title: "Working Offline",
-        description: "Changes will sync when reconnected.",
-        variant: "destructive"
+        title: "Offline",
+        description: "Changes are saved locally and will sync when reconnected.",
       });
     };
     

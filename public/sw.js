@@ -1,13 +1,14 @@
-const CACHE_NAME = 'hunter-pace-timer-v1';
-const STATIC_CACHE_NAME = 'hunter-pace-static-v1';
-const DATA_CACHE_NAME = 'hunter-pace-data-v1';
+const CACHE_NAME = 'hunter-pace-timer-v2';
+const STATIC_CACHE_NAME = 'hunter-pace-static-v2';
+const DATA_CACHE_NAME = 'hunter-pace-data-v2';
 
-// Assets to cache for offline use
+// Assets to cache up-front. Next.js static chunks (/_next/static/*) are cached
+// on first fetch via the runtime handler below — they have hashed filenames so
+// we can safely cache-first them.
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/icon.svg',
-  // Add more static assets as needed
 ];
 
 // Install event - cache static assets
@@ -42,109 +43,56 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle API requests
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('firebase')) {
+  // Skip non-GET requests entirely (POST/PUT/DELETE go to Firebase via SDK,
+  // which has its own offline persistence — interfering would cause double-writes).
+  if (request.method !== 'GET') return;
+
+  // Firebase calls: pass straight through to the SDK; the Firestore SDK's
+  // own IndexedDB persistence handles offline. Don't cache these in the SW.
+  if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) {
+    return;
+  }
+
+  // Next.js static chunks: cache-first, populate on first fetch.
+  // Filenames are content-hashed so cache invalidation is automatic.
+  if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // If online, cache the response and return it
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(DATA_CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If offline, try to serve from cache
-          return caches.match(request).then((response) => {
-            if (response) {
-              return response;
+      caches.match(request).then((cached) => {
+        return (
+          cached ||
+          fetch(request).then((response) => {
+            if (response.status === 200) {
+              const clone = response.clone();
+              caches.open(STATIC_CACHE_NAME).then((cache) => cache.put(request, clone));
             }
-            // Return a custom offline response for API calls
-            return new Response(
-              JSON.stringify({ 
-                error: 'Offline', 
-                message: 'This data will sync when you\'re back online' 
-              }),
-              {
-                status: 503,
-                statusText: 'Service Unavailable',
-                headers: { 'Content-Type': 'application/json' }
-              }
-            );
-          });
-        })
+            return response;
+          })
+        );
+      })
     );
     return;
   }
 
-  // Handle static assets
+  // App shell + everything else: cache-first with network fallback.
+  // If both fail and a document was requested, serve the cached root so the
+  // PWA still boots (the React app then loads cached state from localStorage).
   event.respondWith(
-    caches.match(request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(request).catch(() => {
-          // If offline and no cache, return fallback
+    caches.match(request).then((response) => {
+      return (
+        response ||
+        fetch(request).catch(() => {
           if (request.destination === 'document') {
             return caches.match('/');
           }
-        });
-      })
+        })
+      );
+    })
   );
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('Background sync triggered:', event.tag);
-  
-  if (event.tag === 'sync-event-data') {
-    event.waitUntil(syncEventData());
-  }
-});
-
-// Sync function to upload offline data when back online
-async function syncEventData() {
-  try {
-    // Get offline data from IndexedDB
-    const offlineData = await getOfflineData();
-    
-    if (offlineData.length > 0) {
-      console.log('Syncing offline data:', offlineData);
-      
-      // Send data to server
-      for (const data of offlineData) {
-        try {
-          await fetch('/api/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
-          
-          // Remove synced data from offline storage
-          await removeOfflineData(data.id);
-        } catch (error) {
-          console.error('Failed to sync data:', error);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Background sync failed:', error);
-  }
-}
-
-// Helper functions for IndexedDB operations
-async function getOfflineData() {
-  // Implementation would use IndexedDB to retrieve offline data
-  // For now, return empty array
-  return [];
-}
-
-async function removeOfflineData(id) {
-  // Implementation would remove synced data from IndexedDB
-  console.log('Removing synced data:', id);
-}
+// Background sync removed: the Firestore SDK and the React-side useCloudStorage
+// queue handle offline writes. The previous /api/sync handler called a route
+// that doesn't exist.
 
 // Push notification handler (for future use)
 self.addEventListener('push', (event) => {

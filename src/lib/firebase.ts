@@ -1,6 +1,12 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  getFirestore,
+  persistentLocalCache,
+  persistentSingleTabManager,
+  connectFirestoreEmulator,
+} from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
@@ -61,7 +67,23 @@ if (getApps().length === 0) {
 
 // Initialize Firebase services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Firestore with persistent IndexedDB cache so writes/reads survive offline.
+// initializeFirestore must run before any other Firestore call; reuse getFirestore
+// on subsequent calls (e.g., HMR re-import).
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentSingleTabManager({ forceOwnership: false }),
+    }),
+  });
+} catch {
+  // Already initialized (HMR or re-import). Fall back to the existing instance.
+  firestoreDb = getFirestore(app);
+}
+export const db = firestoreDb;
+
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
