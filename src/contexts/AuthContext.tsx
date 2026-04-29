@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  signInAnonymously,
   onAuthStateChanged,
   updateProfile,
   sendPasswordResetEmail,
@@ -77,8 +78,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = userDoc.data();
       return {
         id: firebaseUser.uid,
-        email: firebaseUser.email!,
-        displayName: firebaseUser.displayName || userData.displayName || 'User',
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || userData.displayName || 'Organizer',
         role: userData.role || 'user',
         createdAt: userData.createdAt?.toDate() || new Date(),
         updatedAt: userData.updatedAt?.toDate() || new Date(),
@@ -88,8 +89,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Create basic user profile if none exists in Firestore
       return {
         id: firebaseUser.uid,
-        email: firebaseUser.email!,
-        displayName: firebaseUser.displayName || 'User',
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || 'Organizer',
         role: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -122,6 +123,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
       } else {
+        // Single-user / no-login mode: silently sign in as anonymous so the
+        // existing Firestore rules (which require request.auth != null) still
+        // apply, and the app skips the AuthPage. The next onAuthStateChanged
+        // tick will pick up the anon user.
+        if (process.env.NEXT_PUBLIC_SINGLE_USER === 'true') {
+          try {
+            await signInAnonymously(auth);
+            return;
+          } catch (err) {
+            console.error('Anonymous sign-in failed:', err);
+          }
+        }
+
         console.log('No Firebase user, setting unauthenticated state');
         setAuthState({
           user: null,
