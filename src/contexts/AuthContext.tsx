@@ -82,6 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: userData.role || 'user',
         createdAt: userData.createdAt?.toDate() || new Date(),
         updatedAt: userData.updatedAt?.toDate() || new Date(),
+        emailVerified: firebaseUser.emailVerified ?? false,
       };
     } else {
       // Create basic user profile if none exists in Firestore
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
+        emailVerified: firebaseUser.emailVerified ?? false,
       };
     }
   };
@@ -186,6 +188,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
+        emailVerified: firebaseUser.emailVerified ?? false,
         phoneNumber: credentials.phone,
         organization: credentials.organizationName,
         bio: `${credentials.firstName} ${credentials.lastName} from ${credentials.organizationName || 'Hunter Pace Event'}`,

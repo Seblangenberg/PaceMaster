@@ -88,6 +88,7 @@ export interface UserProfile {
   role: 'user' | 'admin' | 'organizer';
   createdAt: Date;
   updatedAt: Date;
+  emailVerified: boolean;
   phoneNumber?: string;
   organization?: string;
   bio?: string;
@@ -110,42 +111,20 @@ export interface SignUpCredentials {
   email: string;
   password: string;
   confirmPassword: string;
-  organizationName: string;
+  organizationName?: string;
   businessType?: string;
   phone?: string;
   website?: string;
   state?: string;
   country?: string;
   terms: boolean;
-  marketing?: boolean;
+  marketing: boolean;
 }
 
 export interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface SignUpCredentials {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  organizationName?: string;
-  businessType?: string;
-  phone?: string;
-  website?: string;
-  location?: string;
-  state?: string;
-  country?: string;
-  terms: boolean;
-  marketing: boolean;
 }
 
 // New interfaces for enhanced functionality

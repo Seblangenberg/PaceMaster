@@ -97,7 +97,7 @@ export function AccountSettings() {
     resolver: zodResolver(deleteAccountSchema),
     defaultValues: {
       password: '',
-      confirmation: '',
+      confirmation: '' as 'DELETE',
     },
   });
 
@@ -458,9 +458,9 @@ export function AccountSettings() {
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              variant="destructive" 
+            <Button
+              type="submit"
+              variant="danger"
               disabled={isLoading}
               className="bg-red-600 hover:bg-red-700"
             >
