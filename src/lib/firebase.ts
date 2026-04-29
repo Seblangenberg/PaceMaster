@@ -10,36 +10,11 @@ import {
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
-// Validate required environment variables
-const requiredEnvVars = [
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'NEXT_PUBLIC_FIREBASE_APP_ID'
-];
-
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-const placeholderVars = requiredEnvVars.filter(varName => {
-  const value = process.env[varName];
-  return value && (value.includes('your_') || value.includes('_here') || value === 'your_project_id');
-});
-
-if (missingVars.length > 0) {
-  const errorMessage = `Missing required Firebase environment variables: ${missingVars.join(', ')}. Please check your .env.local file and ensure all required variables are set.`;
-  console.error(errorMessage);
-  console.error('Copy env.example to .env.local and fill in your Firebase project details.');
-  throw new Error(errorMessage);
-}
-
-if (placeholderVars.length > 0) {
-  const errorMessage = `Firebase environment variables contain placeholder values: ${placeholderVars.join(', ')}. Please replace these with your actual Firebase project values.`;
-  console.error(errorMessage);
-  console.error('Get your Firebase config from: https://console.firebase.google.com/project/your-project/settings/general');
-  throw new Error(errorMessage);
-}
-
+// Build the config from STATIC env reads. Next.js only inlines
+// `process.env.NEXT_PUBLIC_*` when the key is a string literal — dynamic
+// `process.env[name]` access returns undefined in the browser bundle, which
+// previously caused the validation block here to throw before Firebase
+// could initialize.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -47,8 +22,18 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+const missingKeys = (
+  ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const
+).filter((k) => !firebaseConfig[k]);
+
+if (missingKeys.length > 0) {
+  const errorMessage = `Missing required Firebase config: ${missingKeys.join(', ')}. Ensure NEXT_PUBLIC_FIREBASE_* variables are set in .env.local at build time.`;
+  console.error(errorMessage);
+  throw new Error(errorMessage);
+}
 
 // Check if Firebase is already initialized
 let app;
