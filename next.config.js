@@ -1,12 +1,17 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Only use static export for production builds (Firebase Hosting)
+  ...(process.env.NODE_ENV === 'production' ? { output: 'export', distDir: 'out' } : {}),
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
-  distDir: 'out',
   images: {
     unoptimized: true
-  }
+  },
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
 }
 
 module.exports = nextConfig

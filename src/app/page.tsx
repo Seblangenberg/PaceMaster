@@ -48,6 +48,31 @@ export default function Home() {
     setupInstallPrompt();
   }, []);
 
+  const saveCurrentEvent = useCallback(async (eventToSave: SavedEvent) => {
+    try {
+      // Save to cloud (which also saves locally as backup)
+      await cloudStorage.saveEvent(eventToSave);
+
+      // Update local state
+      setSavedEvents(prev => {
+        const eventExists = prev.some(e => e.id === eventToSave.id);
+        if (eventExists) {
+          return prev.map(e => e.id === eventToSave.id ? eventToSave : e);
+        } else {
+          return [...prev, eventToSave];
+        }
+      });
+
+    } catch (error) {
+      console.error("Failed to save event:", error);
+      toast({
+        title: "Save Error",
+        description: error instanceof Error ? error.message : "Could not save event.",
+        variant: "destructive"
+      });
+    }
+  }, [cloudStorage, toast]);
+
   // Load events from cloud + local storage when user is authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -57,7 +82,7 @@ export default function Home() {
         // Merge local and cloud data for best reliability
         const events = await cloudStorage.mergeLocalAndCloudData();
         setSavedEvents(events);
-        
+
         // Load the most recently modified event on startup
         if (events.length > 0) {
           const sortedEvents = [...events].sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
@@ -170,31 +195,6 @@ export default function Home() {
     setCurrentEvent(newEvent);
     toast({ title: "New event created." });
   };
-  
-  const saveCurrentEvent = useCallback(async (eventToSave: SavedEvent) => {
-    try {
-      // Save to cloud (which also saves locally as backup)
-      await cloudStorage.saveEvent(eventToSave);
-      
-      // Update local state
-      setSavedEvents(prev => {
-        const eventExists = prev.some(e => e.id === eventToSave.id);
-        if (eventExists) {
-          return prev.map(e => e.id === eventToSave.id ? eventToSave : e);
-        } else {
-          return [...prev, eventToSave];
-        }
-      });
-      
-    } catch (error) {
-      console.error("Failed to save event:", error);
-      toast({ 
-        title: "Save Error", 
-        description: error instanceof Error ? error.message : "Could not save event.", 
-        variant: "destructive" 
-      });
-    }
-  }, [cloudStorage, toast]);
 
   const handleSave = async () => {
     if (currentEvent) {
