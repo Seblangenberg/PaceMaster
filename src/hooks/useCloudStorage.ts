@@ -23,10 +23,15 @@ interface SyncQueueItem {
   retryCount: number;
 }
 
+// Per-user localStorage keys. Without the user.id suffix, two users on the
+// same browser would see each other's events / sync queue.
+const eventsKeyFor = (uid: string) => `hunterPaceEvents:${uid}`;
+const queueKeyFor = (uid: string) => `hunterPace_syncQueue:${uid}`;
+
 export const useCloudStorage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [state, setState] = useState<CloudStorageState>({
     isOnline: navigator.onLine,
     isSyncing: false,
@@ -34,7 +39,7 @@ export const useCloudStorage = () => {
     pendingChanges: 0,
     hasLocalChanges: false,
   });
-  
+
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
 
   // =================================================================
@@ -69,32 +74,39 @@ export const useCloudStorage = () => {
   }, [toast]);
 
   // =================================================================
-  // LOAD SYNC QUEUE FROM LOCALSTORAGE
+  // LOAD SYNC QUEUE FROM LOCALSTORAGE (per-user)
   // =================================================================
-  
+
   useEffect(() => {
+    if (!user) {
+      setSyncQueue([]);
+      return;
+    }
     try {
-      const storedQueue = localStorage.getItem('hunterPace_syncQueue');
+      const storedQueue = localStorage.getItem(queueKeyFor(user.id));
       if (storedQueue) {
         setSyncQueue(JSON.parse(storedQueue));
+      } else {
+        setSyncQueue([]);
       }
     } catch (error) {
       console.error('Failed to load sync queue:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   // =================================================================
   // SAVE SYNC QUEUE TO LOCALSTORAGE
   // =================================================================
-  
+
   const saveQueueToStorage = useCallback((queue: SyncQueueItem[]) => {
+    if (!user) return;
     try {
-      localStorage.setItem('hunterPace_syncQueue', JSON.stringify(queue));
+      localStorage.setItem(queueKeyFor(user.id), JSON.stringify(queue));
       setState(prev => ({ ...prev, pendingChanges: queue.length }));
     } catch (error) {
       console.error('Failed to save sync queue:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   // =================================================================
   // ADD ITEM TO SYNC QUEUE
@@ -127,24 +139,25 @@ export const useCloudStorage = () => {
 
     // 1. ALWAYS save to localStorage first (immediate backup)
     try {
-      const stored = localStorage.getItem('hunterPaceEvents') || '[]';
+      const key = eventsKeyFor(user.id);
+      const stored = localStorage.getItem(key) || '[]';
       const events: SavedEvent[] = JSON.parse(stored);
       const eventIndex = events.findIndex(e => e.id === event.id);
-      
+
       const eventWithMetadata = {
         ...event,
         organizerId: user.id,
         updatedAt: new Date(),
         lastModified: new Date(),
       };
-      
+
       if (eventIndex >= 0) {
         events[eventIndex] = eventWithMetadata;
       } else {
         events.push(eventWithMetadata);
       }
-      
-      localStorage.setItem('hunterPaceEvents', JSON.stringify(events));
+
+      localStorage.setItem(key, JSON.stringify(events));
       setState(prev => ({ ...prev, hasLocalChanges: true }));
       
     } catch (error) {
@@ -255,12 +268,14 @@ export const useCloudStorage = () => {
   // =================================================================
   
   const deleteEvent = useCallback(async (eventId: string): Promise<void> => {
+    if (!user) return;
     // 1. Delete from localStorage immediately
     try {
-      const stored = localStorage.getItem('hunterPaceEvents') || '[]';
+      const key = eventsKeyFor(user.id);
+      const stored = localStorage.getItem(key) || '[]';
       const events: SavedEvent[] = JSON.parse(stored);
       const filtered = events.filter(e => e.id !== eventId);
-      localStorage.setItem('hunterPaceEvents', JSON.stringify(filtered));
+      localStorage.setItem(key, JSON.stringify(filtered));
     } catch (error) {
       console.error('Failed to delete from localStorage:', error);
     }
@@ -276,7 +291,7 @@ export const useCloudStorage = () => {
     } else {
       addToSyncQueue({ id: eventId, action: 'delete', data: null });
     }
-  }, [state.isOnline, addToSyncQueue]);
+  }, [user?.id, state.isOnline, addToSyncQueue]);
 
   // =================================================================
   // PROCESS SYNC QUEUE
@@ -357,20 +372,22 @@ export const useCloudStorage = () => {
   // =================================================================
   
   const mergeLocalAndCloudData = useCallback(async (): Promise<SavedEvent[]> => {
+    if (!user) return [];
+    const key = eventsKeyFor(user.id);
     try {
       // Load from both sources
       const cloudEvents = state.isOnline ? await loadEventsFromCloud() : [];
-      const localStorageData = localStorage.getItem('hunterPaceEvents') || '[]';
+      const localStorageData = localStorage.getItem(key) || '[]';
       const localEvents: SavedEvent[] = JSON.parse(localStorageData);
 
       // Merge strategy: Most recent lastModified wins
       const merged = new Map<string, SavedEvent>();
-      
+
       // Add cloud events first
       cloudEvents.forEach(event => {
         merged.set(event.id, event);
       });
-      
+
       // Add local events, overwriting if local is newer
       localEvents.forEach(localEvent => {
         const cloudEvent = merged.get(localEvent.id);
@@ -387,17 +404,17 @@ export const useCloudStorage = () => {
         .sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
 
       // Update localStorage with merged data
-      localStorage.setItem('hunterPaceEvents', JSON.stringify(mergedEvents));
-      
+      localStorage.setItem(key, JSON.stringify(mergedEvents));
+
       return mergedEvents;
-      
+
     } catch (error) {
       console.error('Failed to merge data:', error);
       // Fallback to localStorage only
-      const localStorageData = localStorage.getItem('hunterPaceEvents') || '[]';
+      const localStorageData = localStorage.getItem(key) || '[]';
       return JSON.parse(localStorageData);
     }
-  }, [state.isOnline, loadEventsFromCloud, addToSyncQueue]);
+  }, [user?.id, state.isOnline, loadEventsFromCloud, addToSyncQueue]);
 
   return {
     // State
