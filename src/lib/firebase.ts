@@ -4,7 +4,7 @@ import {
   initializeFirestore,
   getFirestore,
   persistentLocalCache,
-  persistentSingleTabManager,
+  persistentMultipleTabManager,
   connectFirestoreEmulator,
 } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
@@ -59,8 +59,18 @@ export const auth = getAuth(app);
 let firestoreDb;
 try {
   firestoreDb = initializeFirestore(app, {
+    // Allow `undefined` field values — Firestore otherwise rejects the entire
+    // document. Our domain has many optional fields (team.divisionId,
+    // team.startTime, team.finishTime, registrationDeadline, etc.) that are
+    // legitimately undefined before being set; without this flag every save
+    // failed and retried until the queue dropped it.
+    ignoreUndefinedProperties: true,
     localCache: persistentLocalCache({
-      tabManager: persistentSingleTabManager({ forceOwnership: false }),
+      // Multi-tab manager so phone + laptop running the app simultaneously
+      // share a single source of truth via IndexedDB, with cross-tab leader
+      // election. Single-tab manager silently dropped persistence on the
+      // non-leader tab, which is a real risk during live events.
+      tabManager: persistentMultipleTabManager(),
     }),
   });
 } catch {

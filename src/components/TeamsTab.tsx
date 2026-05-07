@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Upload } from 'lucide-react';
 import type { Team, Division } from '@/lib/types';
+import ImportTeamsDialog, { type ImportedTeamRow } from '@/components/ImportTeamsDialog';
 
 interface TeamsTabProps {
   teams: Team[];
@@ -17,6 +18,7 @@ interface TeamsTabProps {
   onAddTeam: (name: string, riders: string, divisionId?: string, number?: number) => void;
   onUpdateTeam: (team: Team) => void;
   onDeleteTeam: (id: string) => void;
+  onImportTeams: (rows: ImportedTeamRow[]) => void;
 }
 
 function TeamDialog({
@@ -105,7 +107,7 @@ function TeamDialog({
   );
 }
 
-export default function TeamsTab({ teams, divisions, onAddTeam, onUpdateTeam, onDeleteTeam }: TeamsTabProps) {
+export default function TeamsTab({ teams, divisions, onAddTeam, onUpdateTeam, onDeleteTeam, onImportTeams }: TeamsTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredTeams = teams.filter(team =>
@@ -132,6 +134,16 @@ export default function TeamsTab({ teams, divisions, onAddTeam, onUpdateTeam, on
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <ImportTeamsDialog
+                    trigger={
+                        <Button size="sm" variant="outline">
+                            <Upload className="mr-2 h-4 w-4" /> Import CSV
+                        </Button>
+                    }
+                    divisions={divisions}
+                    existingTeams={teams}
+                    onImport={onImportTeams}
+                />
                 <TeamDialog
                     trigger={
                         <Button size="sm">

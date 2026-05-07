@@ -36,7 +36,14 @@ export function OpenEventDialog({ trigger, savedEvents, currentEventId, onLoadEv
     setOpen(false);
   };
 
-  const sortedEvents = [...savedEvents].sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+  const safeTime = (d: any): number => {
+    if (!d) return 0;
+    const t = d instanceof Date ? d.getTime() : new Date(d).getTime();
+    return Number.isFinite(t) ? t : 0;
+  };
+  const sortedEvents = [...savedEvents].sort(
+    (a, b) => safeTime(b.lastModified) - safeTime(a.lastModified)
+  );
 
   return (
     <>
