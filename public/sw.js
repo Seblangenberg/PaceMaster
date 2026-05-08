@@ -1,6 +1,6 @@
-const CACHE_NAME = 'hunter-pace-timer-v11';
-const STATIC_CACHE_NAME = 'hunter-pace-static-v11';
-const DATA_CACHE_NAME = 'hunter-pace-data-v11';
+const CACHE_NAME = 'hunter-pace-timer-v15';
+const STATIC_CACHE_NAME = 'hunter-pace-static-v15';
+const DATA_CACHE_NAME = 'hunter-pace-data-v15';
 
 // Assets to cache up-front. Next.js static chunks (/_next/static/*) are cached
 // on first fetch via the runtime handler below — they have hashed filenames so

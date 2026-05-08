@@ -21,6 +21,7 @@ const config: Config = {
       fontFamily: {
         'body': ['PT Sans', 'system-ui', 'sans-serif'],
         'headline': ['PT Sans', 'system-ui', 'sans-serif'],
+        'display': ['"Playfair Display"', 'Georgia', '"Times New Roman"', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

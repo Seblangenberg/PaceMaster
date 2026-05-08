@@ -285,27 +285,8 @@ function ReadyView({
   const lastUpdateAgo = Math.max(0, Math.round((now - lastUpdate) / 1000));
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-gradient-to-r from-emerald-900 to-emerald-700 text-emerald-50">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-xs uppercase tracking-widest text-emerald-200">Live Results</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-1">
-            {event.eventDetails?.name || 'Hunter Pace Event'}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-emerald-100/90">
-            {event.eventDetails?.date && (
-              <span>
-                {(event.eventDetails.date instanceof Date
-                  ? event.eventDetails.date
-                  : new Date(event.eventDetails.date as any)
-                ).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-              </span>
-            )}
-            {event.eventDetails?.location && <span>· {event.eventDetails.location}</span>}
-            {event.eventDetails?.organizer && <span>· {event.eventDetails.organizer}</span>}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-stone-50">
+      <BrandedHero event={event} lastUpdateAgo={Math.max(0, Math.round((now - lastUpdate) / 1000))} />
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         {event.divisions && event.divisions.length > 1 && (
@@ -361,13 +342,35 @@ function ReadyView({
         </Tabs>
       </main>
 
-      <footer className="border-t mt-8">
-        <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live · updated {lastUpdateAgo}s ago
-          </span>
-          <span>Powered by PaceMaster</span>
+      <footer className="mt-12">
+        <div className="relative">
+          <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+          <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-500">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live · updated {lastUpdateAgo}s ago
+            </span>
+            <span className="font-display tracking-wide">
+              Software by{' '}
+              <a
+                href="https://stableware.pro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-emerald-800 hover:text-emerald-900 hover:underline underline-offset-4"
+              >
+                PaceMaster
+              </a>
+              <span className="mx-2 text-amber-600/70">◆</span>
+              <a
+                href="https://stableware.pro"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-slate-800 hover:text-slate-950 hover:underline underline-offset-4"
+              >
+                StableWare
+              </a>
+            </span>
+          </div>
         </div>
       </footer>
     </div>
@@ -550,11 +553,184 @@ function WaitingList({ teams, divisions }: { teams: Team[]; divisions: Division[
   );
 }
 
+function SponsorMark({
+  src,
+  alt,
+  size = 'sm',
+}: {
+  src: string;
+  alt: string;
+  size?: 'sm' | 'lg';
+}) {
+  const sizeClass =
+    size === 'lg'
+      ? 'h-24 w-44 sm:h-28 sm:w-52 px-2 py-1.5'
+      : 'h-14 w-28 sm:h-16 sm:w-32 px-1.5 py-1';
+  return (
+    <a
+      href="https://stableware.pro"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${alt} · Visit StableWare`}
+      className="group inline-flex focus:outline-none"
+    >
+      <span
+        className={`
+          inline-flex items-center justify-center
+          ${sizeClass}
+          rounded-lg bg-stone-50/95
+          shadow-[0_2px_10px_-2px_rgba(0,0,0,0.35)]
+          ring-1 ring-stone-200/60
+          transition-all duration-300
+          group-hover:bg-white group-hover:shadow-[0_4px_18px_-2px_rgba(0,0,0,0.45)] group-hover:-translate-y-0.5
+        `}
+      >
+        <img
+          src={src}
+          alt={alt}
+          className="max-h-full max-w-full w-auto h-auto object-contain"
+        />
+      </span>
+    </a>
+  );
+}
+
+function BrandedHero({ event, lastUpdateAgo }: { event: SavedEvent; lastUpdateAgo: number }) {
+  const eventName = event.eventDetails?.name || 'Hunter Pace Event';
+  const date = event.eventDetails?.date
+    ? event.eventDetails.date instanceof Date
+      ? event.eventDetails.date
+      : new Date(event.eventDetails.date as any)
+    : null;
+  const dateValid = date && !Number.isNaN(date.getTime());
+
+  return (
+    <header className="relative overflow-hidden text-stone-50">
+      {/* Background gradient locks to the PaceMaster logo's exact teal-green
+         (#165452) so the PaceMaster card sits seamlessly on the page. */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(60% 80% at 50% 30%, #1F6B68 0%, #165452 45%, #0D3937 100%)',
+        }}
+      />
+      {/* Faint paper-grain texture via SVG noise */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        }}
+      />
+      {/* Top gold hairline */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+
+      <div className="relative container mx-auto px-4 pt-6 pb-10 sm:pt-8 sm:pb-12">
+        {/* Host: MOC Beagles — front and center, large */}
+        <div className="flex justify-center">
+          <SponsorMark src="/moc-beagles-logo.png" alt="MOC Beagles" size="lg" />
+        </div>
+
+        {/* Software credit — smaller, secondary */}
+        <div className="mt-3 flex flex-col items-center gap-2">
+          <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.4em] text-amber-200/90 font-medium">
+            Software by
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <SponsorMark src="/pacemaster-logo.png" alt="PaceMaster" />
+            <SponsorMark src="/stableware-logo.png" alt="StableWare" />
+          </div>
+        </div>
+
+        {/* Gold rule with center diamond — echoes the certificate */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-amber-300/70" aria-hidden>
+          <span className="block h-px w-16 sm:w-28 bg-gradient-to-r from-transparent to-amber-300/70" />
+          <span className="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300/80" />
+          <span className="block h-px w-16 sm:w-28 bg-gradient-to-l from-transparent to-amber-300/70" />
+        </div>
+
+        {/* Title block */}
+        <div className="mt-6 text-center">
+          <p className="text-[11px] uppercase tracking-[0.5em] text-amber-200/90">Live Results</p>
+          <h1
+            className="mt-3 font-display font-bold leading-[1.05] text-stone-50 text-4xl sm:text-5xl md:text-6xl"
+            style={{ textShadow: '0 1px 0 rgba(0,0,0,0.35)' }}
+          >
+            {eventName}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm sm:text-[15px] text-emerald-100/85">
+            {dateValid && (
+              <span className="font-display italic text-stone-100/95">
+                {date.toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
+            )}
+            {event.eventDetails?.location && (
+              <>
+                <span aria-hidden className="text-amber-300/60">·</span>
+                <span>{event.eventDetails.location}</span>
+              </>
+            )}
+            {event.eventDetails?.organizer && (
+              <>
+                <span aria-hidden className="text-amber-300/60">·</span>
+                <span>{event.eventDetails.organizer}</span>
+              </>
+            )}
+          </div>
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-950/40 px-3 py-1 text-xs text-emerald-100 backdrop-blur-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Live · updated {lastUpdateAgo}s ago
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom gold hairline */}
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+    </header>
+  );
+}
+
 function CenteredMessage({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-6 gap-2">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      {subtitle && <p className="text-muted-foreground max-w-md">{subtitle}</p>}
+    <div className="min-h-screen flex flex-col bg-stone-50">
+      <header className="relative overflow-hidden text-stone-50">
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(60% 80% at 50% 30%, #1F6B68 0%, #165452 45%, #0D3937 100%)',
+          }}
+        />
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+        <div className="relative container mx-auto px-4 py-6 flex flex-col items-center gap-3">
+          <SponsorMark src="/moc-beagles-logo.png" alt="MOC Beagles" size="lg" />
+          <p className="text-[10px] uppercase tracking-[0.4em] text-amber-200/90 font-medium">
+            Software by
+          </p>
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
+            <SponsorMark src="/pacemaster-logo.png" alt="PaceMaster" />
+            <SponsorMark src="/stableware-logo.png" alt="StableWare" />
+          </div>
+        </div>
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+      </header>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 gap-2">
+        <h1 className="font-display text-2xl font-semibold text-stone-800">{title}</h1>
+        {subtitle && <p className="text-muted-foreground max-w-md">{subtitle}</p>}
+      </div>
     </div>
   );
 }
