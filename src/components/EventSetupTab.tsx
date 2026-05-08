@@ -10,13 +10,23 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { EventDetails } from '@/lib/types';
+import PublicLinkPanel from '@/components/PublicLinkPanel';
 
 interface EventSetupTabProps {
   eventDetails: EventDetails;
   onDetailsChange: (details: EventDetails) => void;
+  eventId: string;
+  publicSlug?: string;
+  onPublicSlugChange: (slug: string | undefined) => void;
 }
 
-export default function EventSetupTab({ eventDetails, onDetailsChange }: EventSetupTabProps) {
+export default function EventSetupTab({
+  eventDetails,
+  onDetailsChange,
+  eventId,
+  publicSlug,
+  onPublicSlugChange,
+}: EventSetupTabProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onDetailsChange({ ...eventDetails, [e.target.name]: e.target.value });
   };
@@ -26,6 +36,7 @@ export default function EventSetupTab({ eventDetails, onDetailsChange }: EventSe
   };
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Event Details</CardTitle>
@@ -71,5 +82,12 @@ export default function EventSetupTab({ eventDetails, onDetailsChange }: EventSe
         </div>
       </CardContent>
     </Card>
+    <PublicLinkPanel
+      eventId={eventId}
+      publicSlug={publicSlug}
+      onSlugChange={onPublicSlugChange}
+      eventName={eventDetails.name}
+    />
+    </div>
   );
 }

@@ -11,9 +11,10 @@ import DivisionsTab from '@/components/DivisionsTab';
 import TeamsTab from '@/components/TeamsTab';
 import TimingTab from '@/components/TimingTab';
 import ResultsTab from '@/components/ResultsTab';
+import AnalyticsTab from '@/components/AnalyticsTab';
 import type { EventDetails, Division, Team, SavedEvent } from '@/lib/types';
 import type { ImportedTeamRow } from '@/components/ImportTeamsDialog';
-import { Settings, ListOrdered, Users, Clock, Trophy } from 'lucide-react';
+import { Settings, ListOrdered, Users, Clock, Trophy, BarChart3 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,7 +219,7 @@ export default function Home() {
     }));
   };
   
-  const handleAddTeam = (name: string, riders: string, divisionId?: string, number?: number) => {
+  const handleAddTeam = (name: string | undefined, riders: string, divisionId?: string, number?: number) => {
     updateCurrentEvent(prev => {
       // Check if the provided team number already exists
       if (number && prev.teams.some(t => t.number === number)) {
@@ -430,15 +431,24 @@ export default function Home() {
       />
       <main className="flex-grow container mx-auto px-4 py-6">
         <Tabs defaultValue="event-setup" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsList className="grid w-full grid-cols-6 mb-4">
             <TabsTrigger value="event-setup"><Settings className="mr-2 h-4 w-4" />{isMobile ? 'Event' : 'Event Setup'}</TabsTrigger>
             <TabsTrigger value="divisions"><ListOrdered className="mr-2 h-4 w-4" />Divisions</TabsTrigger>
             <TabsTrigger value="teams"><Users className="mr-2 h-4 w-4" />Teams</TabsTrigger>
             <TabsTrigger value="timing"><Clock className="mr-2 h-4 w-4" />Timing</TabsTrigger>
             <TabsTrigger value="results"><Trophy className="mr-2 h-4 w-4" />Results</TabsTrigger>
+            <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />{isMobile ? 'Stats' : 'Analytics'}</TabsTrigger>
           </TabsList>
           <TabsContent value="event-setup">
-            <EventSetupTab eventDetails={eventDetails} onDetailsChange={handleSetEventDetails} />
+            <EventSetupTab
+              eventDetails={eventDetails}
+              onDetailsChange={handleSetEventDetails}
+              eventId={currentEvent.id}
+              publicSlug={currentEvent.publicSlug}
+              onPublicSlugChange={(slug) =>
+                updateCurrentEvent(prev => ({ ...prev, publicSlug: slug, lastModified: new Date() }))
+              }
+            />
           </TabsContent>
           <TabsContent value="divisions">
             <DivisionsTab 
@@ -463,6 +473,9 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="results">
             <ResultsTab finishedTeams={finishedTeams} divisions={divisions} eventDetails={eventDetails} />
+          </TabsContent>
+          <TabsContent value="analytics">
+            <AnalyticsTab eventId={currentEvent.id} publicSlug={currentEvent.publicSlug} />
           </TabsContent>
         </Tabs>
       </main>

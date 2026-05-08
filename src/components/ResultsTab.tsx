@@ -18,6 +18,9 @@ interface ResultsTabProps {
   eventDetails: EventDetails;
 }
 
+const teamDisplayName = (team: { number: number; name?: string }): string =>
+  team.name?.trim() ? team.name : `Team #${team.number}`;
+
 function formatDuration(totalSeconds: number): string {
   if (isNaN(totalSeconds)) return '00:00';
   const sign = totalSeconds < 0 ? "-" : "";
@@ -202,7 +205,7 @@ export default function ResultsTab({ finishedTeams, divisions, eventDetails }: R
       doc.setFont('times', 'bold');
       doc.setFontSize(34);
       doc.setTextColor(...FOREST);
-      doc.text(team.name, W / 2, 124, { align: 'center' });
+      doc.text(teamDisplayName(team), W / 2, 124, { align: 'center' });
 
       // Riders
       doc.setFont('times', 'italic');
@@ -286,7 +289,7 @@ export default function ResultsTab({ finishedTeams, divisions, eventDetails }: R
       doc.text('Date', 75, footerY + 5, { align: 'center' });
       doc.text('Organizer', W - 75, footerY + 5, { align: 'center' });
 
-      const safeName = (team.name || 'team').replace(/[^\w\-]+/g, '_');
+      const safeName = teamDisplayName(team).replace(/[^\w\-]+/g, '_');
       doc.save(`${safeName}_Certificate.pdf`);
     } catch (err) {
       console.error('Failed to generate certificate:', err);
@@ -308,7 +311,7 @@ export default function ResultsTab({ finishedTeams, divisions, eventDetails }: R
       const tableData = filteredResults.map((r, i) => [
         i + 1,
         r.number,
-        r.name,
+        teamDisplayName(r),
         r.divisionName,
         formatDuration(r.elapsedTime ?? 0),
         formatDifference(r.difference),
@@ -371,7 +374,9 @@ export default function ResultsTab({ finishedTeams, divisions, eventDetails }: R
                     <TableRow key={result.id}>
                       <TableCell className="font-bold">{index + 1}</TableCell>
                       <TableCell>{result.number}</TableCell>
-                      <TableCell>{result.name}</TableCell>
+                      <TableCell className={result.name?.trim() ? '' : 'italic text-muted-foreground'}>
+                        {teamDisplayName(result)}
+                      </TableCell>
                       <TableCell>{result.divisionName}</TableCell>
                       <TableCell>{formatDuration(result.elapsedTime ?? 0)}</TableCell>
                       <TableCell>
@@ -416,7 +421,7 @@ export default function ResultsTab({ finishedTeams, divisions, eventDetails }: R
                 <div key={item.divisionName} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50 group">
                     <div>
                         <p className="font-bold">{item.divisionName}</p>
-                        <p className="text-muted-foreground">{item.topTeam.name}</p>
+                        <p className="text-muted-foreground">{teamDisplayName(item.topTeam)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge>{formatDuration(item.topTeam.absDifference)}</Badge>

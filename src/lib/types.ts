@@ -38,7 +38,7 @@ export type TeamStatus = 'waiting' | 'running' | 'finished' | 'disqualified' | '
 export interface Team {
   id: string;
   number: number;
-  name: string;
+  name?: string;
   riders: string; // Comma-separated rider names
   divisionId?: string;
   status: TeamStatus;
@@ -66,6 +66,7 @@ export interface SavedEvent {
   createdAt?: Date;
   updatedAt?: Date;
   isPublic?: boolean;
+  publicSlug?: string;
   maxTeams?: number;
   registrationDeadline?: Date;
   description?: string;

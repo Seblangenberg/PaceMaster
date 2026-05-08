@@ -15,11 +15,14 @@ import ImportTeamsDialog, { type ImportedTeamRow } from '@/components/ImportTeam
 interface TeamsTabProps {
   teams: Team[];
   divisions: Division[];
-  onAddTeam: (name: string, riders: string, divisionId?: string, number?: number) => void;
+  onAddTeam: (name: string | undefined, riders: string, divisionId?: string, number?: number) => void;
   onUpdateTeam: (team: Team) => void;
   onDeleteTeam: (id: string) => void;
   onImportTeams: (rows: ImportedTeamRow[]) => void;
 }
+
+const teamDisplayName = (team: { number: number; name?: string }): string =>
+  team.name?.trim() ? team.name : `Team #${team.number}`;
 
 function TeamDialog({
   trigger,
@@ -34,7 +37,7 @@ function TeamDialog({
   description: string;
   divisions: Division[];
   initialData?: Team;
-  onSave: (name: string, riders: string, divisionId?: string, number?: number) => void;
+  onSave: (name: string | undefined, riders: string, divisionId?: string, number?: number) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialData?.name || '');
@@ -43,10 +46,12 @@ function TeamDialog({
   const [number, setNumber] = useState(initialData?.number || '');
 
   const handleSubmit = () => {
-    if (name && riders && divisionId && number) {
+    // Team name is optional. Riders, division, and number remain required.
+    if (riders && divisionId && number) {
       const teamNumber = parseInt(number.toString(), 10);
       if (!isNaN(teamNumber) && teamNumber > 0) {
-        onSave(name, riders, divisionId, teamNumber);
+        const trimmedName = name.trim();
+        onSave(trimmedName ? trimmedName : undefined, riders, divisionId, teamNumber);
         setOpen(false);
         if (!initialData) {
           setName('');
@@ -81,7 +86,13 @@ function TeamDialog({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="team-name" className="text-right">Team Name</Label>
-            <Input id="team-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+            <Input
+              id="team-name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="col-span-3"
+              placeholder="Optional"
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="riders" className="text-right">Riders</Label>
@@ -111,7 +122,7 @@ export default function TeamsTab({ teams, divisions, onAddTeam, onUpdateTeam, on
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    teamDisplayName(team).toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(team.number).includes(searchTerm)
   );
 
@@ -174,7 +185,9 @@ export default function TeamsTab({ teams, divisions, onAddTeam, onUpdateTeam, on
               filteredTeams.sort((a,b) => a.number - b.number).map((team) => (
                 <TableRow key={team.id}>
                   <TableCell className="font-semibold">{team.number}</TableCell>
-                  <TableCell>{team.name}</TableCell>
+                  <TableCell className={team.name?.trim() ? '' : 'italic text-muted-foreground'}>
+                    {teamDisplayName(team)}
+                  </TableCell>
                   <TableCell>{team.riders}</TableCell>
                   <TableCell>{divisions.find(d => d.id === team.divisionId)?.name || 'N/A'}</TableCell>
                   <TableCell className="text-right">

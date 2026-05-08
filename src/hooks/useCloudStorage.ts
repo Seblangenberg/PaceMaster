@@ -497,6 +497,62 @@ export const useCloudStorage = () => {
     }
   }, [user?.id, state.isOnline, loadEventsFromCloud, addToSyncQueue]);
 
+  // =================================================================
+  // PUBLIC SLUG (maps a customizable URL slug -> eventId for /live)
+  // =================================================================
+
+  const claimPublicSlug = useCallback(
+    async (slug: string, eventId: string): Promise<void> => {
+      if (!user) throw new Error('Must be logged in');
+      const normalized = slug.trim().toLowerCase();
+      if (!/^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])?$/.test(normalized)) {
+        throw new Error(
+          'Slug must be 2–50 characters: lowercase letters, numbers, and hyphens (no leading/trailing hyphen).'
+        );
+      }
+      const slugRef = doc(db, 'publicSlugs', normalized);
+      const existing = await getDoc(slugRef);
+      if (existing.exists()) {
+        const data = existing.data();
+        if (data.organizerId !== user.id) {
+          throw new Error(`The link "${normalized}" is already taken.`);
+        }
+        if (data.eventId !== eventId) {
+          // The user owns this slug but had it pointing at a different event.
+          // Re-point it to the new event.
+          await setDoc(slugRef, {
+            eventId,
+            organizerId: user.id,
+            updatedAt: new Date(),
+          });
+        }
+        return;
+      }
+      await setDoc(slugRef, {
+        eventId,
+        organizerId: user.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    },
+    [user]
+  );
+
+  const releasePublicSlug = useCallback(
+    async (slug: string): Promise<void> => {
+      if (!user) return;
+      const normalized = slug.trim().toLowerCase();
+      if (!normalized) return;
+      try {
+        await deleteDoc(doc(db, 'publicSlugs', normalized));
+      } catch (err) {
+        // Rule denial means it's not ours — don't block the UI.
+        console.warn('Failed to release public slug (may be owned by someone else):', err);
+      }
+    },
+    [user]
+  );
+
   return {
     // State
     ...state,
@@ -508,6 +564,8 @@ export const useCloudStorage = () => {
     loadEventsFromCloud,
     mergeLocalAndCloudData,
     processSyncQueue,
+    claimPublicSlug,
+    releasePublicSlug,
 
     // Queue info
     syncQueueLength: syncQueue.length,

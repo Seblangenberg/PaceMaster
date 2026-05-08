@@ -26,7 +26,7 @@ interface ImportTeamsDialogProps {
 
 export interface ImportedTeamRow {
   number: number;
-  name: string;
+  name?: string;
   riders: string;
   divisionId?: string;
 }
@@ -131,18 +131,18 @@ function parseRows(
   if (grid.length === 0) return { headerError: 'CSV is empty.', rows: [] };
 
   const header = grid[0].map(normalizeHeader);
-  const required = ['number', 'name', 'riders'];
+  const required = ['number', 'riders'];
   for (const r of required) {
     if (!header.includes(r)) {
       return {
-        headerError: `Missing required column "${r}". Expected columns: Number, Team Name, Riders, Division (Division optional).`,
+        headerError: `Missing required column "${r}". Expected columns: Number, Riders, and optionally Team Name and Division.`,
         rows: [],
       };
     }
   }
 
   const numberIdx = header.indexOf('number');
-  const nameIdx = header.indexOf('name');
+  const nameIdx = header.indexOf('name'); // -1 if absent — name column is optional
   const ridersIdx = header.indexOf('riders');
   const divisionIdx = header.indexOf('division');
 
@@ -158,7 +158,7 @@ function parseRows(
     const cells = grid[i];
     const raw: Record<string, string> = {
       number: cells[numberIdx]?.trim() ?? '',
-      name: cells[nameIdx]?.trim() ?? '',
+      name: nameIdx >= 0 ? cells[nameIdx]?.trim() ?? '' : '',
       riders: cells[ridersIdx]?.trim() ?? '',
       division: divisionIdx >= 0 ? cells[divisionIdx]?.trim() ?? '' : '',
     };
@@ -200,10 +200,7 @@ function parseRows(
     }
     seenNumbersInFile.set(num, i);
 
-    if (!raw.name) {
-      out.push({ rowIndex: i, raw, result: { ok: false, error: 'Missing team name.' } });
-      continue;
-    }
+    // Team name is optional — no validation required.
     if (!raw.riders) {
       out.push({ rowIndex: i, raw, result: { ok: false, error: 'Missing riders.' } });
       continue;
@@ -226,7 +223,12 @@ function parseRows(
       raw,
       result: {
         ok: true,
-        team: { number: num, name: raw.name, riders: raw.riders, divisionId },
+        team: {
+          number: num,
+          name: raw.name ? raw.name : undefined,
+          riders: raw.riders,
+          divisionId,
+        },
         warnings,
       },
     });
@@ -306,9 +308,9 @@ export default function ImportTeamsDialog({
         <DialogHeader>
           <DialogTitle>Import Teams from CSV</DialogTitle>
           <DialogDescription>
-            Upload a CSV with columns <strong>Number</strong>, <strong>Team Name</strong>,{' '}
-            <strong>Riders</strong>, and optionally <strong>Division</strong>. Division names are
-            matched to your existing divisions.
+            Upload a CSV with columns <strong>Number</strong> and <strong>Riders</strong>{' '}
+            required, plus optional <strong>Team Name</strong> and <strong>Division</strong>.
+            Division names are matched to your existing divisions.
           </DialogDescription>
         </DialogHeader>
 
@@ -404,7 +406,7 @@ export default function ImportTeamsDialog({
                         >
                           <td className="px-2 py-1 text-muted-foreground">{r.rowIndex + 1}</td>
                           <td className="px-2 py-1 font-mono">{r.raw.number}</td>
-                          <td className="px-2 py-1">{r.raw.name}</td>
+                          <td className="px-2 py-1">{r.raw.name || <span className="text-muted-foreground">—</span>}</td>
                           <td className="px-2 py-1">{r.raw.riders}</td>
                           <td className="px-2 py-1">{r.raw.division || '—'}</td>
                           <td

@@ -43,7 +43,10 @@ function TeamCard({ team, divisionName, onStart, onFinish, runningTime }: {
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
-            <p className="font-bold text-lg">#{team.number} - {team.name}</p>
+            <p className="font-bold text-lg">
+              #{team.number}
+              {team.name?.trim() ? ` - ${team.name}` : ''}
+            </p>
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Users className="h-4 w-4"/> {team.riders}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Info className="h-4 w-4"/> {divisionName}</p>
           </div>
