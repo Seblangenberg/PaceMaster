@@ -557,15 +557,21 @@ function SponsorMark({
   src,
   alt,
   size = 'sm',
+  bare = false,
 }: {
   src: string;
   alt: string;
   size?: 'sm' | 'lg';
+  /** When true, logo sits directly on the page with no card backing.
+   *  Use for marks that already have their own background (MOC oval). */
+  bare?: boolean;
 }) {
   const sizeClass =
     size === 'lg'
-      ? 'h-24 w-44 sm:h-28 sm:w-52 px-2 py-1.5'
-      : 'h-14 w-28 sm:h-16 sm:w-32 px-1.5 py-1';
+      ? 'h-20 sm:h-24'
+      : 'h-10 sm:h-12';
+  const widthClass =
+    size === 'lg' ? 'w-36 sm:w-44' : 'w-24 sm:w-28';
   return (
     <a
       href="https://stableware.pro"
@@ -574,23 +580,35 @@ function SponsorMark({
       aria-label={`${alt} · Visit StableWare`}
       className="group inline-flex focus:outline-none"
     >
-      <span
-        className={`
-          inline-flex items-center justify-center
-          ${sizeClass}
-          rounded-lg bg-stone-50/95
-          shadow-[0_2px_10px_-2px_rgba(0,0,0,0.35)]
-          ring-1 ring-stone-200/60
-          transition-all duration-300
-          group-hover:bg-white group-hover:shadow-[0_4px_18px_-2px_rgba(0,0,0,0.45)] group-hover:-translate-y-0.5
-        `}
-      >
+      {bare ? (
         <img
           src={src}
           alt={alt}
-          className="max-h-full max-w-full w-auto h-auto object-contain"
+          className={`${sizeClass} w-auto object-contain transition group-hover:opacity-90`}
         />
-      </span>
+      ) : (
+        // Cream card-stock backing matching the certificate parchment.
+        // Tight padding so the logo nearly fills the frame.
+        <span
+          className={`
+            inline-flex items-center justify-center ${widthClass} ${sizeClass}
+            rounded-md
+            transition-all duration-300
+            group-hover:-translate-y-0.5
+          `}
+          style={{
+            backgroundColor: '#FCF8F0',
+            boxShadow:
+              '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 6px -2px rgba(0,0,0,0.35)',
+          }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            className="max-h-[88%] max-w-[92%] w-auto h-auto object-contain"
+          />
+        </span>
+      )}
     </a>
   );
 }
@@ -613,7 +631,7 @@ function BrandedHero({ event, lastUpdateAgo }: { event: SavedEvent; lastUpdateAg
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(60% 80% at 50% 30%, #1F6B68 0%, #165452 45%, #0D3937 100%)',
+            'radial-gradient(60% 80% at 50% 30%, #1F6868 0%, #145050 45%, #0B3838 100%)',
         }}
       />
       {/* Faint paper-grain texture via SVG noise */}
@@ -629,13 +647,13 @@ function BrandedHero({ event, lastUpdateAgo }: { event: SavedEvent; lastUpdateAg
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
 
       <div className="relative container mx-auto px-4 pt-6 pb-10 sm:pt-8 sm:pb-12">
-        {/* Host: MOC Beagles — front and center, large */}
+        {/* Host: MOC Beagles — sits bare on the green; oval has its own backdrop. */}
         <div className="flex justify-center">
           <SponsorMark src="/moc-beagles-logo.png" alt="MOC Beagles" size="lg" />
         </div>
 
-        {/* Software credit — smaller, secondary */}
-        <div className="mt-3 flex flex-col items-center gap-2">
+        {/* Software credit — smaller, secondary, on cream card-stock pills */}
+        <div className="mt-4 flex flex-col items-center gap-2">
           <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.4em] text-amber-200/90 font-medium">
             Software by
           </p>
@@ -711,7 +729,7 @@ function CenteredMessage({ title, subtitle }: { title: string; subtitle?: string
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(60% 80% at 50% 30%, #1F6B68 0%, #165452 45%, #0D3937 100%)',
+              'radial-gradient(60% 80% at 50% 30%, #1F6868 0%, #145050 45%, #0B3838 100%)',
           }}
         />
         <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
